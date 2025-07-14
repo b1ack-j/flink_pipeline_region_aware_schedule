@@ -37,6 +37,7 @@ import org.apache.flink.runtime.jobmaster.slotpool.DeclarativeSlotPoolBridgeServ
 import org.apache.flink.runtime.jobmaster.slotpool.DeclarativeSlotPoolFactory;
 import org.apache.flink.runtime.jobmaster.slotpool.DeclarativeSlotPoolServiceFactory;
 import org.apache.flink.runtime.jobmaster.slotpool.PreferredAllocationRequestSlotMatchingStrategy;
+import org.apache.flink.runtime.jobmaster.slotpool.RegionAwareRequestSlotMatchingStrategy;
 import org.apache.flink.runtime.jobmaster.slotpool.RequestSlotMatchingStrategy;
 import org.apache.flink.runtime.jobmaster.slotpool.SimpleRequestSlotMatchingStrategy;
 import org.apache.flink.runtime.jobmaster.slotpool.SlotPoolService;
@@ -274,6 +275,10 @@ public final class DefaultSlotPoolServiceSchedulerFactory
             Configuration configuration, JobType jobType) {
         final boolean isLocalRecoveryEnabled =
                 configuration.get(StateRecoveryOptions.LOCAL_RECOVERY);
+
+        if (configuration.get(JobManagerOptions.REGION_AWARE_SCHEDULER)) {
+            return RegionAwareRequestSlotMatchingStrategy.INSTANCE;
+        }
 
         if (isLocalRecoveryEnabled) {
             if (jobType == JobType.STREAMING) {

@@ -20,10 +20,12 @@
 package org.apache.flink.runtime.util;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.StateRecoveryOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.runtime.jobgraph.JobType;
 import org.apache.flink.runtime.jobmaster.slotpool.LocationPreferenceSlotSelectionStrategy;
+import org.apache.flink.runtime.jobmaster.slotpool.RegionAwareSlotSelectionStrategy;
 import org.apache.flink.runtime.jobmaster.slotpool.PreviousAllocationSlotSelectionStrategy;
 import org.apache.flink.runtime.jobmaster.slotpool.SlotSelectionStrategy;
 
@@ -44,10 +46,16 @@ public class SlotSelectionStrategyUtils {
 
         final SlotSelectionStrategy locationPreferenceSlotSelectionStrategy;
 
-        locationPreferenceSlotSelectionStrategy =
-                taskManagerLoadBalanceMode == TaskManagerLoadBalanceMode.SLOTS
-                        ? LocationPreferenceSlotSelectionStrategy.createEvenlySpreadOut()
-                        : LocationPreferenceSlotSelectionStrategy.createDefault();
+        boolean regionAware = configuration.get(JobManagerOptions.REGION_AWARE_SCHEDULER);
+
+        if (regionAware) {
+            locationPreferenceSlotSelectionStrategy = new RegionAwareSlotSelectionStrategy();
+        } else {
+            locationPreferenceSlotSelectionStrategy =
+                    taskManagerLoadBalanceMode == TaskManagerLoadBalanceMode.SLOTS
+                            ? LocationPreferenceSlotSelectionStrategy.createEvenlySpreadOut()
+                            : LocationPreferenceSlotSelectionStrategy.createDefault();
+        }
 
         final boolean isLocalRecoveryEnabled =
                 configuration.get(StateRecoveryOptions.LOCAL_RECOVERY);

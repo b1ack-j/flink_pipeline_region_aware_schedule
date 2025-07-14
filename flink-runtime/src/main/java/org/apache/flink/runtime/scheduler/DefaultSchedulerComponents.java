@@ -31,6 +31,9 @@ import org.apache.flink.runtime.jobmaster.slotpool.SlotSelectionStrategy;
 import org.apache.flink.runtime.scheduler.strategy.PipelinedRegionSchedulingStrategy;
 import org.apache.flink.runtime.scheduler.strategy.SchedulingStrategyFactory;
 import org.apache.flink.runtime.util.SlotSelectionStrategyUtils;
+import org.apache.flink.configuration.JobManagerOptions;
+import org.apache.flink.runtime.scheduler.LocalInputPreferredSlotSharingStrategy;
+import org.apache.flink.runtime.scheduler.RegionSlotSharingStrategy;
 import org.apache.flink.util.clock.SystemClock;
 
 import java.time.Duration;
@@ -98,12 +101,22 @@ public class DefaultSchedulerComponents {
                         slotPool, SystemClock.getInstance());
         final PhysicalSlotProvider physicalSlotProvider =
                 new PhysicalSlotProviderImpl(slotSelectionStrategy, slotPool);
+
+        final boolean regionAware =
+                jobMasterConfiguration.get(JobManagerOptions.REGION_AWARE_SCHEDULER);
+
+        SlotSharingStrategy.Factory slotSharingStrategyFactory =
+                regionAware
+                        ? new RegionSlotSharingStrategy.Factory()
+                        : new LocalInputPreferredSlotSharingStrategy.Factory();
+
         final ExecutionSlotAllocatorFactory allocatorFactory =
                 new SlotSharingExecutionSlotAllocatorFactory(
                         physicalSlotProvider,
                         jobType == JobType.STREAMING,
                         bulkChecker,
-                        slotRequestTimeout);
+                        slotRequestTimeout,
+                        slotSharingStrategyFactory);
         return new DefaultSchedulerComponents(
                 new PipelinedRegionSchedulingStrategy.Factory(),
                 bulkChecker::start,

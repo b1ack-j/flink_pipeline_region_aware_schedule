@@ -735,6 +735,20 @@ public class JobManagerOptions {
                                                     "FLINK-33977"))
                                     .build());
 
+    @Experimental
+    @Documentation.Section({
+        Documentation.Sections.EXPERT_SCHEDULING,
+        Documentation.Sections.ALL_JOB_MANAGER
+    })
+    public static final ConfigOption<Boolean> REGION_AWARE_SCHEDULER =
+            key("jobmanager.scheduler.region-aware")
+                    .booleanType()
+                    .defaultValue(false)
+                    .withDescription(
+                            "Enable pipeline region affinity when assigning slots. "
+                                    + "If enabled, tasks belonging to the same pipeline region are "
+                                    + "co-located on the same set of TaskManagers whenever possible.");
+
     /**
      * Config parameter controlling whether partitions should already be released during the job
      * execution.
